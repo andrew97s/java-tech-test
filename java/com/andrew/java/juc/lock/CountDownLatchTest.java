@@ -1,4 +1,4 @@
-package com.andrew.java;
+package com.andrew.java.juc.lock;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,6 @@ public class CountDownLatchTest {
         CountDownLatch latch = new CountDownLatch(10);
 
         // 计数锁
-
         for (int i = 0; i < 10; i++) {
             final long sleepSecs = i;
             new Thread(()->{

@@ -1,4 +1,4 @@
-package com.andrew.java;
+package com.andrew.java.tools;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;

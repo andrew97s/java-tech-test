@@ -1,4 +1,4 @@
-package com.andrew.java;
+package com.andrew.java.core;
 
 /**
  * @author tongwenjin

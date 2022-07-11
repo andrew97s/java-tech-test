@@ -1,4 +1,4 @@
-package com.andrew.java;
+package com.andrew.java.juc.lock;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

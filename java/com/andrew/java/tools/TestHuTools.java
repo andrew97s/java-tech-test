@@ -1,4 +1,4 @@
-package com.andrew.java;
+package com.andrew.java.tools;
 
 import ch.qos.logback.classic.util.JNDIUtil;
 import cn.hutool.Hutool;
