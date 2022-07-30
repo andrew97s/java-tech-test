@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jol.info.ClassLayout;
 
+import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -92,5 +93,37 @@ public class SynchronizedTest {
 
     private synchronized static void lockMethod(int i) {
         System.out.println(Thread.currentThread().getName() + " says hi !" + i);
+    }
+
+    @Test
+    public void testLockRange() throws IOException {
+        TestSyncClass t1 = new TestSyncClass();
+        TestSyncClass t2 = new TestSyncClass();
+
+
+        for (int i = 0; i < 10; i++) {
+            TestSyncClass testSyncClass = new TestSyncClass();
+            new Thread(()->{
+                testSyncClass.syncMethod();
+            }).start();
+        }
+
+        System.in.read();
+    }
+
+    class TestSyncClass {
+        public void syncMethod() {
+
+            synchronized (TestSyncClass.class) {
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+
+            }
+            log.info(" execution completed !");
+        }
     }
 }
