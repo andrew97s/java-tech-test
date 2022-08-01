@@ -2,8 +2,7 @@
 
 backup_start_time=$[$(date +%s%N)/1000000]
 
-# home directory
-backup_home=/home/za_backups/mysql
+backup_home=/home/za_backups/gitlab
 
 # 最大保存备份文件数量 3 个
 max_reserved_file_count=3
@@ -25,10 +24,13 @@ if [ "$current_file_count" -gt $max_reserved_file_count ]; then
 fi
 
 # 执行备份脚本
-# 1 mysql 全量数据库dump (todo 全量备份适用于小数据量 快速备份的场景 ， 后续采用增量备份)
-# 2. 备份文件夹授权给备份账号
-
-mysqldump --all-databases > "$backup_home/mysql$(date "+%Y%m%d").sql" \
+# 1 提交当前docker镜像文件
+# 2. 保存镜像文件
+# 3. 删除备份产生的镜像
+# 4. 备份文件夹授权给备份账号
+docker commit gitlab-14-0-12 gitlab-backup:latest \
+&& docker save gitlab-backup:latest>"/home/za_backups/gitlab/gitlab-backup$(date "+%Y%m%d").tar" \
+&& docker rmi gitlab-backup:latest \
 && chown -R za_backups $backup_home
 
 backup_end_time=$[$(date +%s%N)/1000000]
