@@ -1,6 +1,5 @@
 package com.andrew.spring;
 
-import com.aa.TestEnableImport;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication
-@TestEnableImport
 public class TestApplication {
 
     public static void main(String[] args) {
