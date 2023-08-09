@@ -17,6 +17,7 @@
         <module>spring</module>
         <module>mq</module>
         <module>java</module>
+        <module>redisson</module>
     </modules>
 
     <packaging>pom</packaging>

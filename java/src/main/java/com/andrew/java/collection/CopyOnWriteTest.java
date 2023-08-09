@@ -2,6 +2,7 @@ package com.andrew.java.collection;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -25,6 +26,7 @@ public class CopyOnWriteTest {
         List list = new CopyOnWriteArrayList();
 
         list.iterator();
+
     }
 
 }
