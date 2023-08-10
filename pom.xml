@@ -18,6 +18,7 @@
         <module>mq</module>
         <module>java</module>
         <module>redisson</module>
+        <module>leetcode</module>
     </modules>
 
     <packaging>pom</packaging>
