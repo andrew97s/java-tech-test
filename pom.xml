@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.andrew</groupId>
+    <artifactId>java-tech-test</artifactId>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+    <modules>
+        <module>comm-protocol</module>
+        <module>db</module>
+        <module>java</module>
+        <module>leetcode</module>
+        <module>logback-test</module>
+        <module>mq</module>
+        <module>redisson</module>
+        <module>scripts</module>
+        <module>spring</module>
+        <module>java-serial</module>
+        <module>java-udisk</module>
+        <module>net-util</module>
+    </modules>
+
+</project>
