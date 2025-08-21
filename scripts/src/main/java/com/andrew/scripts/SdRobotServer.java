@@ -10,7 +10,7 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 思迪机器人控制协议对接
+ * 思迪机器人控制协议对接(文档见 <a href="https://docs.qq.com/pdf/DVkZKS09uQm9hSEVX">协议文档</a>)
  *
  * @author tongwenjin
  * @since 2025-8-21
