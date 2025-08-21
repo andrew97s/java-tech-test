@@ -1,6 +1,5 @@
 package com.andrew;
 
-import cn.hutool.core.lang.Assert;
 import com.fazecast.jSerialComm.SerialPort;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,20 +13,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 读卡器
- *
  * @author tongwenjin
- * @since 2025 -4-24
+ * @since 2025-8-13
  */
+
 @Slf4j
-public class CardReader {
+public class MotorTest {
+
 
     // 串口对象
     private static SerialPort serialPort;
     private static Thread readThread;
     private OutputStream outputStream;
 
-    private CompletableFuture<String> snFuture = new CompletableFuture<>();
+    private CompletableFuture<String> freqFuture = new CompletableFuture<>();
     private CompletableFuture<String> addressFuture = new CompletableFuture<>();
     private CompletableFuture<String> dataFuture = new CompletableFuture<>();
     private CompletableFuture<Boolean> writeFuture = new CompletableFuture<>();
@@ -88,7 +87,7 @@ public class CardReader {
 
                     String cmd = hexString.toString().replace(" ", "");
                     log.debug("接收到数据: {}", hexString);
-                    processCmd(cmd);
+//                    processCmd(cmd);
                 } else {
                     if (Thread.currentThread().isInterrupted()) {
                         // 线程中断
@@ -107,56 +106,21 @@ public class CardReader {
 
     private void processCmd(String resp) {
         // 命令
-        String cmd = resp.substring(4, 6);
+        String cmd = resp.substring(0, 2);
         // 结果
         String status = resp.substring(8, 10);
 
         switch (cmd) {
-            // 读取卡片code
-            case "A1": {
+            // 读取频率
+            case "03": {
                 if ("00".equals(status) && resp.length() == 24) {
                     String cardType = resp.substring(10, 14);
                     String cardCode = resp.substring(14, 22);
                     log.info("读取到卡片信息,cardType:{},cardCode:{}", cardType, cardCode);
-                    snFuture.complete(cardCode);
+                    freqFuture.complete(cardCode);
                 } else {
-                    snFuture.complete("");
+                    freqFuture.complete("");
                     log.error("读取卡片code失败!");
-                }
-                break;
-            }
-            // 读取block数据
-            case "A3": {
-                if ("00".equals(status) && resp.length() == 44) {
-                    String data = new String(hexStringToBytes(resp.substring(10, 40)), StandardCharsets.UTF_8);
-                    log.info("读取到卡片block数据:{}", data);
-                    dataFuture.complete(data);
-                } else {
-                    dataFuture.complete("");
-                    log.error("读取卡片block数据失败!");
-                }
-                break;
-            }
-            // 写入block数据
-            case "A4": {
-                if ("00".equals(status) && resp.length() == 14) {
-                    log.info("写入卡片block数据成功!");
-                    writeFuture.complete(true);
-                } else {
-                    writeFuture.complete(false);
-                    log.error("写入卡片block数据失败!");
-                }
-                break;
-            }
-            // 读写器地址
-            case "B0": {
-                if ("00".equals(status) && resp.length() == 16) {
-                    String address = resp.substring(10,12);
-                    log.info("读写器地址查询成功! -> {}" , address);
-                    addressFuture.complete(address);
-                } else {
-                    addressFuture.complete("-1");
-                    log.error("读写器地址查询失败!");
                 }
                 break;
             }
@@ -173,7 +137,7 @@ public class CardReader {
      */
     public void sendToSerial(OutputStream outputStream, byte[] msg) {
         // 校验和
-        msg[msg.length - 1] = calculateChecksum(msg);
+         msg = calculateCRC(msg);
 
         try {
             outputStream.write(msg);
@@ -181,6 +145,28 @@ public class CardReader {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static byte[] calculateCRC(byte[] data) {
+        int crc = 0xFFFF; // 初始值
+        byte[] result = new byte[data.length + 2];
+        for (int i = 0; i < data.length; i++) {
+            byte b = data[i];
+            result[i] = b;
+            crc ^= (b & 0xFF);
+            for (int n = 0; n < 8; n++) {
+                if ((crc & 0x0001) != 0) {
+                    crc = (crc >> 1) ^ 0xA001; // 多项式 0xA001
+                } else {
+                    crc = crc >> 1;
+                }
+            }
+        }
+
+        result[result.length - 2] = (byte) (crc & 0xFF);       // 低字节
+        result[result.length - 1] = (byte) ((crc >> 8) & 0xFF); // 高字节
+
+        return result;
     }
 
     /**
@@ -229,91 +215,31 @@ public class CardReader {
         return result;
     }
 
-
-    public String readAddress() {
-        byte[] cmdBytes = {
-                0x02, 0x08, (byte) 0xB0, 0x00, 0x00, 0x00, 0x00, 0x45
-        };
-        sendToSerial(outputStream, cmdBytes);
-        try {
-            long start = System.currentTimeMillis();
-            String address = addressFuture.get(100, TimeUnit.MILLISECONDS);
-            log.info("finished in {} ms" , (System.currentTimeMillis() -start));
-            addressFuture = new CompletableFuture<>();
-            return address;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     /**
-     * 读取卡片数据
+     * 读取卡片编号
      *
      * @return the string
      */
-    public String readCardData() {
-        // 读取2区数据
+    public String getFrequency() {
         byte[] cmdBytes = {
-                0x01, 0x08, (byte) 0xA3, 0x20, 0x01, 0x00, 0x00, 0x00
+                0x01, 0x03, 0x00, 0x22, 0x00, 0x02
         };
         sendToSerial(outputStream, cmdBytes);
 
         try {
-            String sn = dataFuture.get(3, TimeUnit.SECONDS);
-            dataFuture = new CompletableFuture<>();
+            String sn = freqFuture.get(3, TimeUnit.SECONDS);
+            freqFuture = new CompletableFuture<>();
             return sn;
         } catch (Exception e) {
             return null;
         }
     }
 
-    /**
-     * 像卡片写入数据
-     *
-     * @param data the data
-     * @return the string
-     */
-    public boolean writeCardData(String data) {
-        byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
-        if (dataBytes.length <= 15) {
-            byte[] bytes = new byte[16];
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] = i < dataBytes.length ? dataBytes[i] : 0;
-            }
-            dataBytes = bytes;
-        } else {
-            throw new IllegalArgumentException("写入卡片数据长度必须小于15个字节!");
-        }
-        byte[] cmdBytes = new byte[23];
-        cmdBytes[0] = 0x01;
-        cmdBytes[1] = 0x17;
-        cmdBytes[2] = (byte) 0xA4;
-        cmdBytes[3] = 0x20;
-        // 指定block 为 2
-        cmdBytes[4] = 0x01;
-        cmdBytes[5] = 0x01;
-        // 数据位
-        for (int i = 6; i < cmdBytes.length - 1; i++) {
-            cmdBytes[i] = dataBytes[i - 6];
-        }
+    public void openChannel() {
+        byte[] cmdBytes = {
+                0x01, 0x06, 0x05, (byte) 0xE1, 0x00, 0x2D
+        };
         sendToSerial(outputStream, cmdBytes);
-        try {
-            boolean b = writeFuture.get(3, TimeUnit.SECONDS);
-            writeFuture = new CompletableFuture<>();
-            return b;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private byte calculateChecksum(byte[] data) {
-        byte checksum = data[0];
-        for (int i = 1; i < data.length - 2; i++) {
-            checksum ^= data[i];
-        }
-        // 取反
-        return (byte) ~checksum;
     }
 
 
@@ -325,9 +251,10 @@ public class CardReader {
      */
     public static void main(String[] args) throws Exception {
         System.out.println(args.length);
-        CardReader main = new CardReader();
+        MotorTest main = new MotorTest();
 
-        main.connectPort(args[0]);
+//        main.connectPort(args[0]);
+        main.connectPort("COM7");
 
         Scanner scanner = new Scanner(System.in);
 
@@ -343,20 +270,11 @@ public class CardReader {
             switch (input) {
                 case "address":
                     log.info("读取读卡器地址...");
-                    System.out.println(main.readAddress());
+                    System.out.println(main.getFrequency());
                     break;
-                case "read":
-                    log.info("读取卡片信息...");
-                    System.out.println(main.readCardData());
-                    break;
-                case "readData":
-                    log.info("读取卡片数据...");
-                    System.out.println(main.readCardData());
-                    break;
-                case "writeData":
-                    log.info("写入卡片数据,输入卡片数据(15byte)...");
-                    String data = scanner.nextLine();
-                    System.out.println(main.writeCardData(data));
+                case "channel":
+                    log.info("open channel...");
+                    main.openChannel();
                     break;
                 default:
                     log.info("未知命令:{}", input);

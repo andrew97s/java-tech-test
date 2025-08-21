@@ -27,6 +27,8 @@
         <module>java-serial</module>
         <module>java-udisk</module>
         <module>net-util</module>
+        <module>net-util-gxjk</module>
+        <module>printer</module>
     </modules>
 
 </project>
